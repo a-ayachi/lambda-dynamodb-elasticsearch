@@ -1,0 +1,47 @@
+service: lambda-dynamodb-elasticsearch
+
+plugins:
+  - serverless-pseudo-parameters
+
+custom:
+  tableName: users-${self:custom.stage}
+  stage: ${opt:stage, self:provider.stage}
+  domainName: users-domain-${self:custom.stage}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  timeout: 10
+  logRetentionInDays: 1
+  region: eu-west-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "es:*"
+        - "dynamodb:*"
+        - "logs:*"
+        - ec2:CreateNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DeleteNetworkInterface
+      Resource: "*"    
+  environment:
+    ELASTICSEARCH_DOMAINE: !GetAtt ElasticDomain.DomainEndpoint      
+
+functions:
+  stream_indexer:
+    handler: handler.main
+    vpc:
+      securityGroupIds:
+        - sg-0a9c5b3f77f473eb5
+      subnetIds:
+        - subnet-0c6aae9244df7486c
+    events:
+      - stream:
+          type: dynamodb
+          arn: 
+            Fn::GetAtt: [UsersTable, StreamArn]
+
+resources:
+  - ${file(resources/dynamodb.yml)}
+  - ${file(resources/elasticsearch.yml)}

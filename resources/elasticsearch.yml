@@ -1,0 +1,29 @@
+Resources:
+  ElasticDomain:    
+    Type: AWS::Elasticsearch::Domain
+    Properties:  
+      DomainName: ${self:custom.domainName}
+      ElasticsearchVersion: 7.1
+      VPCOptions:
+         SecurityGroupIds: 
+           - sg-0a9c5b3f77f473eb5
+         SubnetIds:
+           - subnet-0c6aae9244df7486c
+      ElasticsearchClusterConfig:
+        InstanceCount: 1
+        InstanceType: t2.small.elasticsearch
+      EBSOptions:
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 20
+        VolumeType: gp2
+      AccessPolicies: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              AWS: "*"
+            Action: "es:*"
+            Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/${self:custom.domainName}/*"
+          
